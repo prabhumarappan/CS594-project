@@ -9,6 +9,6 @@
 3. Create Chatrooms
 4. Join Chatrooms
 5. Leave Chatroom
-6. List Clients
+6. List Chatroom Clients
 7. Private Message (extra)
-8. Secure Message (extra)
+8. Disconnect
