@@ -53,35 +53,36 @@ class IRCServerHandler():
                 self.rooms[room_name].remove(client_name)
                 self.client_rooms[client_name].remove(room_name)
                 self.broadcast_to_clients(room_name, client_name, message)
+                self.send_message_to_client(client_name, "You have left the chatroom %s" % room_name)
             else:
-                self.send_message_to_client("Error, user is not in the room")
+                self.send_message_to_client("Error: you have not joined the chat room")
         else:
-            self.send_message_to_client("Error, room does not exist")
+            self.send_message_to_client("Error: room does not exist")
 
     def send_chatroom_message(self, client_name, room_name, message):
         if room_name in self.rooms:
             if client_name in self.rooms[room_name]:
                 self.broadcast_to_clients(room_name, client_name, message)
             else:
-                self.send_message_to_client("Error, user is not in the room")
+                self.send_message_to_client("Error: user is not in the room")
         else:
-            self.send_message_to_client("Error, room does not exist")
+            self.send_message_to_client("Error: room does not exist")
 
     def send_direct_message(self, sender, receiver, message):
         if sender in self.clients:
             if receiver in self.clients:
                 self.send_message_to_client(receiver, message)
             else:
-                self.send_message_to_client("Error, receiver is not a registered client")
+                self.send_message_to_client("Error: receiver is not a registered client")
         else:
-            self.send_message_to_client("Error, sender is not a registered client")
+            self.send_message_to_client("Error: sender is not a registered client")
 
     def list_chat_room_clients(self, client_name, room_name):
         if client_name in self.rooms[room_name]:
             room_clients = "clients in room: %s" % ",".join(x for x in self.rooms[room_name])
             self.send_message_to_client(client_name, room_clients)
         else:
-            self.send_message_to_client(client_name, "You do not belong to the chat room, join chat room first")
+            self.send_message_to_client(client_name, "Error: You do not belong to the chat room, join chat room first")
 
     def leave_server(self, client_name):
         if client_name in self.client_rooms:
@@ -93,13 +94,6 @@ class IRCServerHandler():
         print("Disconnected the client %s " % client_name)
         sys.exit(1)
 
-    def enable_secure_messaging(self, client_name, key):
-        if client_name in self.clients:
-            self.clients[client_name]["secure"] = True
-            self.clients[client_name]["secure_key"] = key
-        else:
-            print("Error, client is not a registered client")
-
     def decode_client_message(self, clt):
         while True:
             data = clt.recv(1024)
@@ -108,8 +102,7 @@ class IRCServerHandler():
                 data_json = json.loads(data.decode('utf-8'))
                 client_name = data_json['clientname'].strip()
                 self.clients[client_name] = {
-                    "address": clt,
-                    "secure": False
+                    "address": clt
                 }
                 command = data_json['command']
                 if command == 'CLIENTINIT':
