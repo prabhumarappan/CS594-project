@@ -6,7 +6,9 @@ import json
 """
 IRC Server Handler to connect multiple clients to a server and then send messages between them
 """
-class IRCServerHandler():
+
+
+class IRCServerHandler:
     clients = {}
     rooms = {}
     client_rooms = {}
@@ -28,18 +30,18 @@ class IRCServerHandler():
         """
         try:
             receiver_sock = self.clients[receiver]["address"]
-            receiver_sock.sendall(bytes(message, encoding='utf8'))
+            receiver_sock.sendall(bytes(message, encoding="utf8"))
         except Exception as e:
             print(e)
             print("Unable to send msg to client:", receiver)
-    
+
     def broadcast_to_clients(self, room_name, sender, message):
         """
         Function to send a message to all clients in a single room
 
         Args:
             room_name (str): Name of the room to which the broadcast needs to be sent to
-            sender (str): The name of the sender 
+            sender (str): The name of the sender
             message (str): The message that needs to be sent across
         """
         for receiver in self.rooms[room_name]:
@@ -61,7 +63,7 @@ class IRCServerHandler():
         Function to create a chat room
 
         Args:
-            client_name (str): Name of the client 
+            client_name (str): Name of the client
             room_name (str): Name of the room that needs to be created
             message (str): The first message that needs to be sent
         """
@@ -104,7 +106,9 @@ class IRCServerHandler():
                 self.rooms[room_name].remove(client_name)
                 self.client_rooms[client_name].remove(room_name)
                 self.broadcast_to_clients(room_name, client_name, message)
-                self.send_message_to_client(client_name, "You have left the chatroom %s" % room_name)
+                self.send_message_to_client(
+                    client_name, "You have left the chatroom %s" % room_name
+                )
             else:
                 self.send_message_to_client("Error: you have not joined the chat room")
         else:
@@ -140,7 +144,9 @@ class IRCServerHandler():
             if receiver in self.clients:
                 self.send_message_to_client(receiver, message)
             else:
-                self.send_message_to_client("Error: receiver is not a registered client")
+                self.send_message_to_client(
+                    "Error: receiver is not a registered client"
+                )
         else:
             self.send_message_to_client("Error: sender is not a registered client")
 
@@ -153,10 +159,15 @@ class IRCServerHandler():
             room_name (str): Name of the chat room for which they want to list clients
         """
         if client_name in self.rooms[room_name]:
-            room_clients = "clients in room: %s" % ",".join(x for x in self.rooms[room_name])
+            room_clients = "clients in room: %s" % ",".join(
+                x for x in self.rooms[room_name]
+            )
             self.send_message_to_client(client_name, room_clients)
         else:
-            self.send_message_to_client(client_name, "Error: You do not belong to the chat room, join chat room first")
+            self.send_message_to_client(
+                client_name,
+                "Error: You do not belong to the chat room, join chat room first",
+            )
 
     def leave_server(self, client_name):
         """
@@ -184,62 +195,64 @@ class IRCServerHandler():
         while True:
             data = clt.recv(1024)
             if data:
-                data_json = json.loads(data.decode('utf-8'))
-                client_name = data_json['clientname'].strip()
-                self.clients[client_name] = {
-                    "address": clt
-                }
-                command = data_json['command']
-                if command == 'CLIENTINIT':
-                    print("%s connected to the server"  % client_name)
-                elif command == 'CREATECHATROOM':
-                    room_name = data_json['room_name']
-                    message = data_json['message']
+                data_json = json.loads(data.decode("utf-8"))
+                client_name = data_json["clientname"].strip()
+                self.clients[client_name] = {"address": clt}
+                command = data_json["command"]
+                if command == "CLIENTINIT":
+                    print("%s connected to the server" % client_name)
+                elif command == "CREATECHATROOM":
+                    room_name = data_json["room_name"]
+                    message = data_json["message"]
                     self.create_chat_room(client_name, room_name, message)
-                elif command == 'JOINCHATROOM':
-                    room_name = data_json['room_name']
-                    message = data_json['message']
+                elif command == "JOINCHATROOM":
+                    room_name = data_json["room_name"]
+                    message = data_json["message"]
                     self.join_chat_room(client_name, room_name, message)
-                elif command == 'LISTCHATROOMS':
-                    room_name = data_json['room_name']
+                elif command == "LISTCHATROOMS":
+                    room_name = data_json["room_name"]
                     self.list_chat_rooms(client_name)
-                elif command == 'LEAVECHATROOM':
-                    room_name = data_json['room_name']
-                    message = data_json['message']
+                elif command == "LEAVECHATROOM":
+                    room_name = data_json["room_name"]
+                    message = data_json["message"]
                     self.leave_chat_room(client_name, room_name, message)
-                elif command == 'SENDMESSAGE':
-                    room_name = data_json['room_name']
-                    message = '%s from %s says: ' % (client_name, room_name) + data_json['message']
+                elif command == "SENDMESSAGE":
+                    room_name = data_json["room_name"]
+                    message = (
+                        "%s from %s says: " % (client_name, room_name)
+                        + data_json["message"]
+                    )
                     self.send_chatroom_message(client_name, room_name, message)
-                elif command == 'SENDDIRECTMESSAGE':
-                    receiver = data_json['receiver']
-                    message = '%s says: ' % client_name + data_json['message']
+                elif command == "SENDDIRECTMESSAGE":
+                    receiver = data_json["receiver"]
+                    message = "%s says: " % client_name + data_json["message"]
                     self.send_direct_message(client_name, receiver, message)
-                elif command == 'LISTCHATROOMCLIENTS':
-                    room_name = data_json['room_name']
-                    message = data_json['message']
+                elif command == "LISTCHATROOMCLIENTS":
+                    room_name = data_json["room_name"]
+                    message = data_json["message"]
                     self.list_chat_room_clients(client_name, room_name)
-                elif command == 'DISCONNECT':
+                elif command == "DISCONNECT":
                     self.leave_server(client_name)
                 else:
                     print("WRONG COMMAND, send retry to user")
             else:
                 self.leave_server(client_name)
-                     
+
     def start_new_thread(self, clt, adr):
         """
-        This will be used to start a new thread for each new client. We will have new thread for each client because that way messages won't be lost 
+        This will be used to start a new thread for each new client. We will have new thread for each client because that way messages won't be lost
 
         Args:
-            clt (object): The socket object with which we have to read and send messages to 
+            clt (object): The socket object with which we have to read and send messages to
             adr (Address): Address from which the connection was being made
         """
         print(adr[0] + " is now connected! and starting a new thread")
         self.decode_client_message(clt)
 
+
 def start_server():
     """
-    The main function start starts the IRC server and starts listening for 10 clients at max!    
+    The main function start starts the IRC server and starts listening for 10 clients at max!
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -250,8 +263,15 @@ def start_server():
         print("Waiting for new clients to connect")
         sys.stdout.flush()
         clt1, adr1 = s.accept()
-        cltr_thread = threading.Thread(target=server.start_new_thread, args=(clt1, adr1,))
+        cltr_thread = threading.Thread(
+            target=server.start_new_thread,
+            args=(
+                clt1,
+                adr1,
+            ),
+        )
         cltr_thread.start()
+
 
 if __name__ == "__main__":
     start_server()
