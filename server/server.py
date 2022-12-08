@@ -9,10 +9,10 @@ IRC Server Handler to connect multiple clients to a server and then send message
 
 
 class IRCServerHandler:
-    clients = {}
-    rooms = {}
-    client_rooms = {}
-    rooms_list = []
+    clients = {}  # name of clients and their address stored in a dictionary
+    rooms = {}  # rooms and their clients stored in a dictionary
+    client_rooms = {}  # clients and their rooms stored in a dictionary
+    rooms_list = []  # list of rooms stored
 
     def __init__(self):
         """
@@ -110,7 +110,9 @@ class IRCServerHandler:
                     client_name, "You have left the chatroom %s" % room_name
                 )
             else:
-                self.send_message_to_client(client_name, "Error: you have not joined the chat room")
+                self.send_message_to_client(
+                    client_name, "Error: you have not joined the chat room"
+                )
         else:
             self.send_message_to_client(client_name, "Error: room does not exist")
 
@@ -127,7 +129,9 @@ class IRCServerHandler:
             if client_name in self.rooms[room_name]:
                 self.broadcast_to_clients(room_name, client_name, message)
             else:
-                self.send_message_to_client(client_name, "Error: user is not in the room")
+                self.send_message_to_client(
+                    client_name, "Error: user is not in the room"
+                )
         else:
             self.send_message_to_client(client_name, "Error: room does not exist")
 
@@ -148,7 +152,9 @@ class IRCServerHandler:
                     "Error: receiver is not a registered client"
                 )
         else:
-            self.send_message_to_client(sender, "Error: sender is not a registered client")
+            self.send_message_to_client(
+                sender, "Error: sender is not a registered client"
+            )
 
     def list_chat_room_clients(self, client_name, room_name):
         """
