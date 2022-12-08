@@ -3,12 +3,11 @@ import threading
 import sys
 import json
 
-"""
-IRC Server Handler to connect multiple clients to a server and then send messages between them
-"""
-
 
 class IRCServerHandler:
+    """
+    IRC Server Handler to connect multiple clients to a server and then send messages between them    
+    """
     clients = {}  # name of clients and their address stored in a dictionary
     rooms = {}  # rooms and their clients stored in a dictionary
     client_rooms = {}  # clients and their rooms stored in a dictionary
@@ -31,8 +30,8 @@ class IRCServerHandler:
         try:
             receiver_socket = self.clients[receiver]["address"]
             receiver_socket.sendall(bytes(message, encoding="utf8"))
-        except Exception as e:
-            print(e)
+        except Exception as err:
+            print(err)
             print("Unable to send msg to client:", receiver)
 
     def broadcast_to_clients(self, room_name, sender, message):
@@ -57,17 +56,17 @@ class IRCServerHandler:
         Args:
             client_name (str): The name of the client
         """
-        all_chat_rooms = "chat rooms : %s" % ",".join(x for x in self.rooms_list)
+        all_chat_rooms = ",".join(x for x in self.rooms_list)
+        all_chat_rooms = f"chat rooms : {all_chat_rooms}"
         self.send_message_to_client(client_name, all_chat_rooms)
 
-    def create_chat_room(self, client_name, room_name, message):
+    def create_chat_room(self, client_name, room_name):
         """
         Function to create a chat room
 
         Args:
             client_name (str): Name of the client
             room_name (str): Name of the room that needs to be created
-            message (str): The first message that needs to be sent
         """
         chat_room_clients = [client_name]
         self.rooms[room_name] = chat_room_clients
@@ -114,14 +113,10 @@ class IRCServerHandler:
                 self.rooms[room_name].remove(client_name)
                 self.client_rooms[client_name].remove(room_name)
                 self.broadcast_to_clients(room_name, client_name, message)
-                self.send_message_to_client(
-                    client_name, "You have left the chatroom %s" % room_name
-                )
+                self.send_message_to_client(client_name, f"You have left the chatroom {room_name}")
             else:
                 # send an error if client is not part of the chat room
-                self.send_message_to_client(
-                    client_name, "Error: you have not joined the chat room"
-                )
+                self.send_message_to_client(client_name, "Error: you have not joined the chat room")
         else:
             # send error message if the room does not exist
             self.send_message_to_client(client_name, "Error: room does not exist")
@@ -142,9 +137,7 @@ class IRCServerHandler:
                 self.broadcast_to_clients(room_name, client_name, message)
             else:
                 # throw an error if the client is not part of the chat room
-                self.send_message_to_client(
-                    client_name, "Error: user is not in the room"
-                )
+                self.send_message_to_client(client_name, "Error: user is not in the room")
         else:
             # send error message if the room does not exist
             self.send_message_to_client(client_name, "Error: room does not exist")
@@ -166,14 +159,10 @@ class IRCServerHandler:
                 self.send_message_to_client(receiver, message)
             else:
                 # send an error if the receiver is not found
-                self.send_message_to_client(
-                    "Error: receiver is not a registered client"
-                )
+                self.send_message_to_client(sender, "Error: receiver is not a registered client")
         else:
             # send an error if the sender is not found
-            self.send_message_to_client(
-                sender, "Error: sender is not a registered client"
-            )
+            self.send_message_to_client(sender, "Error: sender is not a registered client")
 
     def list_chat_room_clients(self, client_name, room_name):
         """
@@ -186,9 +175,8 @@ class IRCServerHandler:
         # check if client is part of the request chat room
         if client_name in self.rooms[room_name]:
             # form a string with the clients in that room
-            room_clients = "clients in room: %s" % ",".join(
-                x for x in self.rooms[room_name]
-            )
+            room_clients = ",".join(x for x in self.rooms[room_name])
+            room_clients = f"clients in room: {room_clients}"
             # send the message with the client names to the client
             self.send_message_to_client(client_name, room_clients)
         else:
@@ -213,7 +201,7 @@ class IRCServerHandler:
             del self.client_rooms[client_name]
         client_socket = self.clients[client_name]["address"]
         client_socket.close()
-        print("Disconnected the client %s " % client_name)
+        print(f"Disconnected the client {client_name}")
         sys.exit(1)
 
     def decode_client_message(self, clt):
@@ -231,11 +219,10 @@ class IRCServerHandler:
                 self.clients[client_name] = {"address": clt}
                 command = data_json["command"]
                 if command == "CLIENTINIT":
-                    print("%s connected to the server" % client_name)
+                    print(f"{client_name} connected to the server")
                 elif command == "CREATECHATROOM":
                     room_name = data_json["room_name"]
-                    message = data_json["message"]
-                    self.create_chat_room(client_name, room_name, message)
+                    self.create_chat_room(client_name, room_name)
                 elif command == "JOINCHATROOM":
                     room_name = data_json["room_name"]
                     message = data_json["message"]
@@ -248,14 +235,11 @@ class IRCServerHandler:
                     self.leave_chat_room(client_name, room_name, message)
                 elif command == "SENDMESSAGE":
                     room_name = data_json["room_name"]
-                    message = (
-                        "%s from %s says: " % (client_name, room_name)
-                        + data_json["message"]
-                    )
+                    message = f"{client_name} from {room_name} says: " + data_json["message"]
                     self.send_chatroom_message(client_name, room_name, message)
                 elif command == "SENDDIRECTMESSAGE":
                     receiver = data_json["receiver"]
-                    message = "%s says: " % client_name + data_json["message"]
+                    message = f"{client_name} says: " + data_json["message"]
                     self.send_direct_message(client_name, receiver, message)
                 elif command == "LISTCHATROOMCLIENTS":
                     room_name = data_json["room_name"]
@@ -270,7 +254,8 @@ class IRCServerHandler:
 
     def start_new_thread(self, clt, adr):
         """
-        This will be used to start a new thread for each new client. We will have new thread for each client because that way messages won't be lost
+        This will be used to start a new thread for each new client. We will have new thread
+        for each client because that way messages won't be lost
 
         Args:
             clt (object): The socket object with which we have to read and send messages to
@@ -284,15 +269,15 @@ def start_server():
     """
     The main function start starts the IRC server and starts listening for 10 clients at max!
     """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((socket.gethostname(), 1078))
-    s.listen(10)
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((socket.gethostname(), 1078))
+    server.listen(10)
     server = IRCServerHandler()
     while True:
         print("Waiting for new clients to connect")
         sys.stdout.flush()
-        clt1, adr1 = s.accept()
+        clt1, adr1 = server.accept()
         cltr_thread = threading.Thread(
             target=server.start_new_thread,
             args=(
