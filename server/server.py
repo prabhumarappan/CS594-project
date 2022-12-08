@@ -6,8 +6,9 @@ import json
 
 class IRCServerHandler:
     """
-    IRC Server Handler to connect multiple clients to a server and then send messages between them    
+    IRC Server Handler to connect multiple clients to a server and then send messages between them
     """
+
     clients = {}  # name of clients and their address stored in a dictionary
     rooms = {}  # rooms and their clients stored in a dictionary
     client_rooms = {}  # clients and their rooms stored in a dictionary
