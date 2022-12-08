@@ -9,10 +9,18 @@ SERVER_ADDRESS = os.getenv("SERVER_ADDRESS", socket.gethostname())
 SERVER_PORT = int(os.getenv("SERVER_PORT", 1078))
 MSS = 1024
 
-print(SERVER_ADDRESS, SERVER_PORT)
 
+"""
+IRC Client to interact with user through CLI and communicate the same with the server
+"""
 class IRCClient():
 	def __init__(self, client_name) -> None:
+		"""
+		Start a new client, connect them to the server by sending a intilaization message.
+
+		Args:
+			client_name (str): Name of the client that will be send to the for future correspondence
+		"""
 		print("Connecting Client %s To Server" % client_name, flush=True)
 		self.client_name = client_name
 		self.clientSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,6 +37,12 @@ class IRCClient():
 		print("Connected Client %s To Server" % client_name, flush=True)
 
 	def create_chat_room(self, name):
+		"""
+		Function to create a chat room from the clients end. Client will format and send a message to server so that it can create the specific chat room
+
+		Args:
+			name (str): Name of the chat room that needs to be created
+		"""
 		data = {
 			"command": "CREATECHATROOM",
 			"room_name": name,
@@ -39,6 +53,12 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 
 	def join_chat_room(self, name):
+		"""
+        Function to join an existing chat room by it's name
+
+		Args:
+			name (str): Name of the chat room
+		"""
 		data = {
 			"command": "JOINCHATROOM",
 			"room_name": name,
@@ -49,6 +69,13 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 	
 	def send_message(self, name, message):
+		"""
+        Function to send a message from the client to a specific chatroom on the server
+
+		Args:
+			name (_type_): _description_
+			message (_type_): _description_
+		"""
 		data = {
 			"command": "SENDMESSAGE",
 			"room_name": name,
@@ -59,6 +86,13 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 
 	def send_direct_message(self, receiver, message):
+		"""
+        Function to send a message to another client (a DM). This will format and send the message to the server, which will relay the message to the specific receiver. 
+
+		Args:
+			receiver (str): Name of the receiver, the client wishes to send a message
+			message (str): Message that the client wants to send
+		"""
 		data = {
 			"command": "SENDDIRECTMESSAGE",
 			"receiver": receiver,
@@ -69,6 +103,12 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 
 	def leave_chat_room(self, name):
+		"""
+        Function to leave an existing chat room. Sends the chat room that the client is part of, and server removes them from that list
+
+		Args:
+			name (str): Name of the chat room from which they want to be removed
+		"""
 		data = {
 			"command": "LEAVECHATROOM",
 			"room_name": name,
@@ -79,6 +119,9 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 
 	def disconnect(self):
+		"""
+        Function to disconnect the client from the server. This sends the client a message and server kills the thread that it had assigned for the client.
+		"""
 		data = {
 			"command": "DISCONNECT",
 			"room_name": None,
@@ -89,6 +132,9 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 
 	def list_chat_rooms(self):
+		"""
+        Function to list chat rooms on the server. This send back a list of chat rooms.
+		"""
 		data = {
 			"command": "LISTCHATROOMS",
 			"room_name": None,
@@ -99,6 +145,12 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 
 	def list_chat_room_clients(self, room_name):
+		"""
+        Function to list clients on a specific chat room. Given a chat room name, the server responds with the clients names
+
+		Args:
+			room_name (str): Name of the chat room
+		"""
 		data = {
 			"command": "LISTCHATROOMCLIENTS",
 			"room_name": room_name,
@@ -109,6 +161,9 @@ class IRCClient():
 		self.clientSock.sendall(dataToSend)
 
 	def start_chat(self):
+		"""
+        Function that helps the client to communicate with the server by constantly taking inputs from the user through a while loop and sending messages back and forth. 
+		"""
 		sockets_list = [sys.stdin, self.clientSock]
 
 		while True:
@@ -154,6 +209,7 @@ class IRCClient():
 						else:
 							print("Invalid command")
 			except select.error:
+				# this happens when the socket connection has errored out, so in this case we shutdown the connection and close it.
 				print('closing it')
 				self.clientSock.shutdown(2)
 				self.clientSock.close()
@@ -164,6 +220,9 @@ class IRCClient():
 
 
 def main():
+	"""
+    Main function to get the client name, initiate the client connection to the server and start the client to take/receieve commands.
+	"""
 	clientName = input("Enter Client Name: ").strip()
 	client = IRCClient(clientName)
 	client.start_chat()
