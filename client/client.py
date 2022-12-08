@@ -21,7 +21,7 @@ class IRCClient:
         Start a new client, connect them to the server by sending a intilaization message.
 
         Args:
-                client_name (str): Name of the client that will be send to the for future correspondence
+            	client_name (str): Name of the client that will be send to the for future correspondence
         """
         print("Connecting Client %s To Server" % client_name, flush=True)
         self.client_name = client_name
@@ -37,6 +37,32 @@ class IRCClient:
         dataToSend = json.dumps(data).encode("utf-8")
         self.clientSock.sendall(dataToSend)
         print("Connected Client %s To Server" % client_name, flush=True)
+
+    def make_payload(
+        self, command, client_name, message, room_name=None, receiver=None
+    ) -> dict:
+        """
+        Function to create a payload that would be sent to the server
+
+        Args:
+                command (str): Command that needs to be executed at the server
+                client_name (str): Client name that is sending the message
+                message (str): The message that needs to be sent along
+                room_name (str, optional): Room name that message needs to be sent to. Defaults to None.
+                receiver (str, optional): _description_. Defaults to None.
+
+        Returns:
+                dict: Paylaod for the server
+        """
+
+        data = {"clientname": client_name, "message": message, "command": command}
+
+        if room_name:
+            data["room_name"] = room_name
+        if receiver:
+            data["receiver"] = receiver
+
+        return data
 
     def create_chat_room(self, name):
         """
@@ -58,8 +84,8 @@ class IRCClient:
         """
         Function to join an existing chat room by it's name
 
-		Args:
-				name (str): Name of the chat room
+        Args:
+                name (str): Name of the chat room
         """
         data = {
             "command": "JOINCHATROOM",
@@ -74,9 +100,9 @@ class IRCClient:
         """
         Function to send a message from the client to a specific chatroom on the server
 
-		Args:
-				name (str): Name of the chat room to which the client wants to send a message
-				message (str): Message that the client wants to send a message
+        Args:
+                name (str): Name of the chat room to which the client wants to send a message
+                message (str): Message that the client wants to send a message
         """
         data = {
             "command": "SENDMESSAGE",
@@ -91,9 +117,9 @@ class IRCClient:
         """
         Function to send a message to another client (a DM). This will format and send the message to the server, which will relay the message to the specific receiver.
 
-		Args:
-				receiver (str): Name of the receiver, the client wishes to send a message
-				message (str): Message that the client wants to send
+        Args:
+                        receiver (str): Name of the receiver, the client wishes to send a message
+                        message (str): Message that the client wants to send
         """
         data = {
             "command": "SENDDIRECTMESSAGE",
@@ -108,8 +134,8 @@ class IRCClient:
         """
         Function to leave an existing chat room. Sends the chat room that the client is part of, and server removes them from that list
 
-		Args:
-				name (str): Name of the chat room from which they want to be removed
+        Args:
+                name (str): Name of the chat room from which they want to be removed
         """
         data = {
             "command": "LEAVECHATROOM",
@@ -150,8 +176,8 @@ class IRCClient:
         """
         Function to list clients on a specific chat room. Given a chat room name, the server responds with the clients names
 
-		Args:
-				room_name (str): Name of the chat room
+        Args:
+                room_name (str): Name of the chat room
         """
         data = {
             "command": "LISTCHATROOMCLIENTS",
