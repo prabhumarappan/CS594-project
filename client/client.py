@@ -39,7 +39,7 @@ class IRCClient:
         print("Connected Client %s To Server" % client_name, flush=True)
 
     def make_payload(
-        self, command, client_name, message, room_name=None, receiver=None
+        self, command, client_name, message=None, room_name=None, receiver=None
     ) -> dict:
         """
         Function to create a payload that would be sent to the server
@@ -47,7 +47,7 @@ class IRCClient:
         Args:
                 command (str): Command that needs to be executed at the server
                 client_name (str): Client name that is sending the message
-                message (str): The message that needs to be sent along
+                message (str): The message that needs to be sent along. Defaults to None.
                 room_name (str, optional): Room name that message needs to be sent to. Defaults to None.
                 receiver (str, optional): Name of the receiver that will receive the message. Defaults to None.
 
@@ -65,10 +65,14 @@ class IRCClient:
         return data
 
     def make_and_send_payload(
-        self, command, client_name, message, room_name=None, receiver=None
+        self, command, message=None, room_name=None, receiver=None
     ):
         data = self.make_payload(
-            command, client_name, message, room_name=None, receiver=None
+            command=command,
+            client_name=self.client_name,
+            message=message,
+            room_name=room_name,
+            receiver=receiver,
         )
         dataToSend = json.dumps(data).encode("utf-8")
         self.clientSock.sendall(dataToSend)
@@ -83,7 +87,6 @@ class IRCClient:
         self.make_and_send_payload(
             command="CREATECHATROOM",
             room_name=name,
-            client_name=self.client_name,
             message="%s created this chatroom" % (self.client_name),
         )
 
@@ -97,7 +100,6 @@ class IRCClient:
         self.make_and_send_payload(
             command="JOINCHATROOM",
             room_name=name,
-            client_name=self.client_name,
             message="%s joined this chatroom" % (self.client_name),
         )
 
@@ -112,7 +114,6 @@ class IRCClient:
         self.make_and_send_payload(
             command="SENDMESSAGE",
             room_name=name,
-            client_name=self.client_name,
             message=message,
         )
 
@@ -127,7 +128,6 @@ class IRCClient:
         self.make_and_send_payload(
             command="SENDDIRECTMESSAGE",
             receiver=receiver,
-            client_name=self.client_name,
             message=message,
         )
 
@@ -141,7 +141,6 @@ class IRCClient:
         self.make_and_send_payload(
             command="LEAVECHATROOM",
             room_name=name,
-            client_name=self.client_name,
             message="%s has left this chatroom" % (self.client_name),
         )
 
@@ -151,8 +150,6 @@ class IRCClient:
         """
         self.make_and_send_payload(
             command="DISCONNECT",
-            room_name=None,
-            client_name=self.client_name,
             message="%s has left the server" % (self.client_name),
         )
 
@@ -162,9 +159,6 @@ class IRCClient:
         """
         self.make_and_send_payload(
             command="LISTCHATROOMS",
-            room_name=None,
-            client_name=self.client_name,
-            message=None,
         )
 
     def list_chat_room_clients(self, room_name):
@@ -177,8 +171,6 @@ class IRCClient:
         self.make_and_send_payload(
             command="LISTCHATROOMCLIENTS",
             room_name=room_name,
-            client_name=self.client_name,
-            message=None,
         )
 
     def start_chat(self):
