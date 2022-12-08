@@ -29,8 +29,8 @@ class IRCServerHandler:
             message (str): This is the message that needs to be sent across
         """
         try:
-            receiver_sock = self.clients[receiver]["address"]
-            receiver_sock.sendall(bytes(message, encoding="utf8"))
+            receiver_socket = self.clients[receiver]["address"]
+            receiver_socket.sendall(bytes(message, encoding="utf8"))
         except Exception as e:
             print(e)
             print("Unable to send msg to client:", receiver)
@@ -44,7 +44,9 @@ class IRCServerHandler:
             sender (str): The name of the sender
             message (str): The message that needs to be sent across
         """
+        # go through all the clients on the requested room
         for receiver in self.rooms[room_name]:
+            # do not send the message back to the client themselves
             if receiver != sender:
                 self.send_message_to_client(receiver, message)
 
@@ -83,13 +85,16 @@ class IRCServerHandler:
             room_name (str): Name of the room
             message (str): Message that needs to be sent
         """
+        # check if room exists on the server rooms list
         if room_name in self.rooms:
+            # add client name to rooms clients
             self.rooms[room_name].append(client_name)
             if client_name not in self.client_rooms:
                 self.client_rooms[client_name] = []
             self.client_rooms[client_name].append(room_name)
             self.broadcast_to_clients(room_name, client_name, message)
         else:
+            # send error message if the room does not exist
             self.send_message_to_client(client_name, "Error: room does not exist")
 
     def leave_chat_room(self, client_name, room_name, message):
@@ -101,8 +106,11 @@ class IRCServerHandler:
             room_name (str): Name of the chat room that the user will leave
             message (str): Message that will be broadcasted to clients upon leaving
         """
+        # check if room exists on the server rooms list
         if room_name in self.rooms:
+            # check if client is part of the chat room
             if client_name in self.rooms[room_name]:
+                # remove them from the chat room and broadcast a message to all existing clients
                 self.rooms[room_name].remove(client_name)
                 self.client_rooms[client_name].remove(room_name)
                 self.broadcast_to_clients(room_name, client_name, message)
@@ -110,10 +118,12 @@ class IRCServerHandler:
                     client_name, "You have left the chatroom %s" % room_name
                 )
             else:
+                # send an error if client is not part of the chat room
                 self.send_message_to_client(
                     client_name, "Error: you have not joined the chat room"
                 )
         else:
+            # send error message if the room does not exist
             self.send_message_to_client(client_name, "Error: room does not exist")
 
     def send_chatroom_message(self, client_name, room_name, message):
@@ -125,14 +135,18 @@ class IRCServerHandler:
             room_name (str): Name of the chat room to which we send a message
             message (str): Message that needs to be sent across
         """
+        # check if room exists on the server rooms list
         if room_name in self.rooms:
+            # if client is part of the chat room broadcast a message to all clients
             if client_name in self.rooms[room_name]:
                 self.broadcast_to_clients(room_name, client_name, message)
             else:
+                # throw an error if the client is not part of the chat room
                 self.send_message_to_client(
                     client_name, "Error: user is not in the room"
                 )
         else:
+            # send error message if the room does not exist
             self.send_message_to_client(client_name, "Error: room does not exist")
 
     def send_direct_message(self, sender, receiver, message):
@@ -144,14 +158,19 @@ class IRCServerHandler:
             receiver (str): Name of the receiver who sender wishes to send a message
             message (str): Message the sender wishes to send
         """
+        # check if sender is there in the clients list
         if sender in self.clients:
+            # check if the intended receiver is on the clients list
             if receiver in self.clients:
+                # send a message to the receiver
                 self.send_message_to_client(receiver, message)
             else:
+                # send an error if the receiver is not found
                 self.send_message_to_client(
                     "Error: receiver is not a registered client"
                 )
         else:
+            # send an error if the sender is not found
             self.send_message_to_client(
                 sender, "Error: sender is not a registered client"
             )
@@ -164,12 +183,16 @@ class IRCServerHandler:
             client_name (str): Name of the client that wishes to do the operation
             room_name (str): Name of the chat room for which they want to list clients
         """
+        # check if client is part of the request chat room
         if client_name in self.rooms[room_name]:
+            # form a string with the clients in that room
             room_clients = "clients in room: %s" % ",".join(
                 x for x in self.rooms[room_name]
             )
+            # send the message with the client names to the client
             self.send_message_to_client(client_name, room_clients)
         else:
+            # send an error if the client is not part of the room
             self.send_message_to_client(
                 client_name,
                 "Error: You do not belong to the chat room, join chat room first",
@@ -182,7 +205,9 @@ class IRCServerHandler:
         Args:
             client_name (str): Client that wants to leave the server
         """
+        # check if client is part of the client room
         if client_name in self.client_rooms:
+            # remove the client from the room
             for room_name in self.client_rooms[client_name]:
                 self.rooms[room_name].remove(client_name)
             del self.client_rooms[client_name]
