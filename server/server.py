@@ -210,7 +210,6 @@ class IRCServerHandler:
                     message = data_json["message"]
                     self.join_chat_room(client_name, room_name, message)
                 elif command == "LISTCHATROOMS":
-                    room_name = data_json["room_name"]
                     self.list_chat_rooms(client_name)
                 elif command == "LEAVECHATROOM":
                     room_name = data_json["room_name"]
